@@ -1,15 +1,15 @@
 {
     "train_config": {
-        "fp16_run": true,
+        "fp16_run": false,
         "output_directory": "checkpoints",
         "epochs": 100000,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-5,
         "sigma": 1.0,
         "iters_per_checkpoint": 2000,
-        "batch_size": 6,
+        "batch_size": 2,
         "seed": 1234,
         "checkpoint_path": "weigths/waveglow_256channels_universal_v5.pt",
-        "with_tensorboard": false
+        "with_tensorboard": true
     },
     "data_config": {
         "training_files": "train_files.txt",
