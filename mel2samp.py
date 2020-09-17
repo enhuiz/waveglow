@@ -39,7 +39,7 @@ from scipy.io.wavfile import read
 sys.path.insert(0, "tacotron2")
 from tacotron2.layers import TacotronSTFT
 
-MAX_WAV_VALUE = 32768.0
+# MAX_WAV_VALUE = 32768.0
 
 
 def files_to_list(filename):
@@ -59,7 +59,6 @@ def load_wav_to_torch(full_path):
     """
     # sampling_rate, data = read(full_path)
     data, sampling_rate = librosa.core.load(full_path)
-    data *= MAX_WAV_VALUE
     return torch.from_numpy(data).float(), sampling_rate
 
 
@@ -95,7 +94,7 @@ class Mel2Samp(torch.utils.data.Dataset):
         self.sampling_rate = sampling_rate
 
     def get_mel(self, audio):
-        audio_norm = audio / MAX_WAV_VALUE
+        audio_norm = audio / torch.abs(audio).max()
         audio_norm = audio_norm.unsqueeze(0)
         audio_norm = torch.autograd.Variable(audio_norm, requires_grad=False)
         melspec = self.stft.mel_spectrogram(audio_norm)
@@ -124,7 +123,6 @@ class Mel2Samp(torch.utils.data.Dataset):
             ).data
 
         mel = self.get_mel(audio)
-        audio = audio / MAX_WAV_VALUE
 
         return (mel, audio)
 
