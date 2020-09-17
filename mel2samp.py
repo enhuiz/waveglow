@@ -33,7 +33,7 @@ import torch.utils.data
 import sys
 import librosa
 
-# from scipy.io.wavfile import read
+from scipy.io.wavfile import read
 
 # We're using the audio processing from TacoTron2 to make sure it matches
 sys.path.insert(0, "tacotron2")
@@ -59,6 +59,7 @@ def load_wav_to_torch(full_path):
     """
     # sampling_rate, data = read(full_path)
     data, sampling_rate = librosa.core.load(full_path)
+    data *= MAX_WAV_VALUE
     return torch.from_numpy(data).float(), sampling_rate
 
 
