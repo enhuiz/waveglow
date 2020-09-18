@@ -39,7 +39,7 @@ from scipy.io.wavfile import read
 sys.path.insert(0, "tacotron2")
 from tacotron2.layers import TacotronSTFT
 
-# MAX_WAV_VALUE = 32768.0
+MAX_WAV_VALUE = 32768.0
 
 
 def files_to_list(filename):
