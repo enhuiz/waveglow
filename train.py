@@ -74,6 +74,33 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
     )
 
 
+import matplotlib
+import matplotlib.pylab as plt
+import numpy as np
+
+matplotlib.use("Agg")  # non-GUI backend, cannot show figure
+
+
+def save_figure_to_numpy(fig):
+    # save it to a numpy array.
+    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    return data
+
+
+def plot_spectrogram_to_numpy(spectrogram):
+    fig, ax = plt.subplots(figsize=(12, 3))
+    im = ax.imshow(spectrogram, aspect="auto", origin="lower", interpolation="none")
+    plt.colorbar(im, ax=ax)
+    plt.xlabel("Frames")
+    plt.ylabel("Channels")
+    plt.tight_layout()
+    fig.canvas.draw()
+    data = save_figure_to_numpy(fig)
+    plt.close()
+    return data
+
+
 def train(
     num_gpus,
     rank,
@@ -172,9 +199,44 @@ def train(
 
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
             if with_tensorboard and rank == 0:
-                logger.add_scalar(
-                    "training_loss", reduced_loss, i + len(train_loader) * epoch
-                )
+                step = i + len(train_loader) * epoch
+                if step % 100 == 0:
+                    # concat 4 audios/mels to obtain more demo
+                    real_audio = audio[:4].flatten(0, 1).detach().cpu()
+                    real_mel = torch.cat(list(mel[:4]), dim=-1).detach().cpu()
+
+                    model.eval()
+                    with torch.no_grad():
+                        fake_audio = model.infer(mel[:4]).flatten(0, 1).cpu()
+                    model.train()
+
+                    fake_mel = trainset.get_mel(fake_audio)
+                    logger.add_image(
+                        "training_mel_fake",
+                        plot_spectrogram_to_numpy(fake_mel),
+                        step,
+                        dataformats="HWC",
+                    )
+                    logger.add_audio(
+                        "training_audio_fake",
+                        fake_audio,
+                        step,
+                        22050,
+                    )
+                    logger.add_image(
+                        "training_mel_real",
+                        plot_spectrogram_to_numpy(real_mel),
+                        step,
+                        dataformats="HWC",
+                    )
+                    logger.add_audio(
+                        "training_audio_real",
+                        audio[0],
+                        step,
+                        22050,
+                    )
+                    logger.flush()
+                logger.add_scalar("training_loss", reduced_loss, step)
 
             if iteration % iters_per_checkpoint == 0:
                 if rank == 0:
