@@ -59,7 +59,8 @@ def load_wav_to_torch(full_path):
     """
     # sampling_rate, data = read(full_path)
     data, sampling_rate = librosa.core.load(full_path)
-    return torch.from_numpy(data).float(), sampling_rate
+    data = torch.from_numpy(data).float().clamp(-1, 1)
+    return data, sampling_rate
 
 
 class Mel2Samp(torch.utils.data.Dataset):

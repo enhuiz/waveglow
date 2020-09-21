@@ -3,12 +3,12 @@
         "fp16_run": false,
         "output_directory": "checkpoints",
         "epochs": 100000,
-        "learning_rate": 1e-5,
+        "learning_rate": 5e-6,
         "sigma": 1.0,
         "iters_per_checkpoint": 2000,
-        "batch_size": 18,
+        "batch_size": 20,
         "seed": 1234,
-        "checkpoint_path": "weights/waveglow_256channels_universal_v5.pt",
+        "checkpoint_path": "checkpoints/waveglow_52000",
         "with_tensorboard": true
     },
     "data_config": {
@@ -25,7 +25,6 @@
         "dist_backend": "nccl",
         "dist_url": "tcp://localhost:54321"
     },
-
     "waveglow_config": {
         "n_mel_channels": 80,
         "n_flows": 12,

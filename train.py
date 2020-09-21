@@ -170,6 +170,11 @@ def train(
 
         logger = SummaryWriter(os.path.join(output_directory, "logs"))
 
+    # fixed for visualization
+    real_mels, real_audios = zip(*[trainset[i] for i in range(8)])
+    real_mel = torch.cat(real_mels, dim=-1)
+    real_audio = torch.cat(real_audios, dim=0)
+
     model.train()
     epoch_offset = max(0, int(iteration / len(train_loader)))
     # ================ MAIN TRAINNIG LOOP! ===================
@@ -200,17 +205,33 @@ def train(
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
             if with_tensorboard and rank == 0:
                 step = i + len(train_loader) * epoch
-                if step % 100 == 0:
-                    # concat 4 audios/mels to obtain more demo
-                    real_audio = audio[:4].flatten(0, 1).detach().cpu()
-                    real_mel = torch.cat(list(mel[:4]), dim=-1).detach().cpu()
+                logger.add_scalar("training_loss", reduced_loss, step)
+                if step % 500 == 0:
+                    # select the first eight data sample
 
                     model.eval()
                     with torch.no_grad():
-                        fake_audio = model.infer(mel[:4]).flatten(0, 1).cpu()
+                        device = mel.device
+                        fake_audio = (
+                            model.infer(torch.stack(real_mels).to(device))
+                            .flatten(0, 1)
+                            .cpu()
+                        )
                     model.train()
-
                     fake_mel = trainset.get_mel(fake_audio)
+
+                    logger.add_image(
+                        "training_mel_real",
+                        plot_spectrogram_to_numpy(real_mel),
+                        step,
+                        dataformats="HWC",
+                    )
+                    logger.add_audio(
+                        "training_audio_real",
+                        real_audio,
+                        step,
+                        22050,
+                    )
                     logger.add_image(
                         "training_mel_fake",
                         plot_spectrogram_to_numpy(fake_mel),
@@ -223,20 +244,7 @@ def train(
                         step,
                         22050,
                     )
-                    logger.add_image(
-                        "training_mel_real",
-                        plot_spectrogram_to_numpy(real_mel),
-                        step,
-                        dataformats="HWC",
-                    )
-                    logger.add_audio(
-                        "training_audio_real",
-                        audio[0],
-                        step,
-                        22050,
-                    )
                     logger.flush()
-                logger.add_scalar("training_loss", reduced_loss, step)
 
             if iteration % iters_per_checkpoint == 0:
                 if rank == 0:

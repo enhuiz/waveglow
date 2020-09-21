@@ -4,6 +4,6 @@ checkpoints
 *.log
 *.path
 *files.txt
-weigths
+weights
 *patch
 *swp

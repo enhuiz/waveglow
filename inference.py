@@ -31,8 +31,6 @@ import torch
 from mel2samp import files_to_list, MAX_WAV_VALUE
 from denoiser import Denoiser
 
-torch.nn.Module.dump_patches = True
-
 
 def main(
     mel_files,
